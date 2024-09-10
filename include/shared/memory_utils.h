@@ -25,10 +25,16 @@ inline uint32_t regcall floatToUInt32(float x) { return uint32_t(x); }
 int regcall GetRandomInt(int range);
 int regcall GetRandomIntRng(int lo, int hi);
 float regcall GetRandomFloat(float min, float max);
-uint8_t *regcall searchBytes(uint8_t *pBuff, uintptr_t pBuffSize,
+uint8_t *regcall searchBytesDbg(uint8_t *pBuff, uintptr_t pBuffSize,
                              uint8_t *pPattBuf);
-uint8_t *regcall scanBytes(uint8_t *pBuff, uintptr_t pBuffSize,
+uint8_t *regcall scanBytesImpl(uint8_t *pBuff, uintptr_t pBuffSize,
                            uint8_t *pPattBuf);
+#ifdef _FORCE_DBGLOG
+#define scanBytes scanBytesDbg
+#else
+#define scanBytes scanBytesImpl
+#endif
+
 uint8_t * searchSkipBytes(uint8_t *pBuff, uintptr_t pBuffSize, ...);
 #define bytes_search
 #ifdef bytes_search
@@ -120,6 +126,68 @@ class format<IndexList<Index...>> {
     (bytes_search::format<bytes_search::ConstructIndexList<      \
          static_cast<uint32_t>((sizeof(x) - 1) / 2)>::Result>(x) \
          .formatGet())
-#define BSF BYTES_SEARCH_FORMAT
+#include <array>
+// Converts a single hex character to its integer value
+constexpr uint8_t hexCharToByte(char c) {
+    return (c >= '0' && c <= '9') ? (c - '0') :
+           (c >= 'A' && c <= 'F') ? (c - 'A' + 10) :
+           (c >= 'a' && c <= 'f') ? (c - 'a' + 10) : 0;
+}
+
+// Converts a string of hex digits to a single byte
+constexpr uint8_t hexPairToByte(char high, char low) {
+    return (hexCharToByte(high) << 4) | hexCharToByte(low);
+}
+
+// Converts a string of hex digits to a constexpr array of bytes and generates a bit-level mask
+template<std::size_t N>
+constexpr auto hexStringToByteArrayWithBitMask(const char(&str)[N]) {
+    static_assert(N % 2 == 1, "Hex string must have an even number of characters.");
+
+    constexpr std::size_t byteSize = (N - 1) / 2; // Total bytes
+    std::array<uint8_t, byteSize> bytes = {};
+    std::array<uint8_t, (byteSize + 7) / 8> bitMask = {};  // Bit mask array (1 bit per byte)
+
+    for (std::size_t i = 0; i < N - 1; i += 2) {
+        std::size_t byteIndex = i / 2;
+
+        // Determine if the current byte is part of a wildcard pattern
+        bool isWildcard = (str[i] == '?') || (str[i + 1] == '?');
+
+        if (isWildcard) {
+            // Set the bit corresponding to this byte to 1 in the bit mask
+            bitMask[byteIndex / 8] |= (1 << ( (byteIndex % 8)));
+        } else {
+            bytes[byteIndex] = hexPairToByte(str[i], str[i + 1]);
+        }
+    }
+
+    return std::make_pair(bytes, bitMask);
+}
+
+// Define a structure to hold size, pattern, and bit mask
+template<std::size_t PatternSize, std::size_t MaskSize>
+struct PackedPattern {
+    uint16_t size;
+    std::array<uint8_t, PatternSize> pattern;
+    std::array<uint8_t, MaskSize> bitMask;
+};
+
+// Define a constexpr function to create PackedPattern and return it
+template<std::size_t N>
+constexpr PackedPattern<((N - 1) / 2), (((N - 1) / 2 + 7) / 8)>
+createPackedPattern(const char(&pattern)[N]) {
+    auto result = hexStringToByteArrayWithBitMask(pattern);
+    return PackedPattern<((N - 1) / 2), (((N - 1) / 2 + 7) / 8)>{
+        static_cast<uint16_t>(result.first.size()),
+        result.first,
+        result.second
+    };
+}
+
+// Define macro to directly create PackedPattern and use it in printPackedData
+#define BSF(pattern) (createPackedPattern(pattern))
+
+// #define BSF BYTES_SEARCH_FORMAT
 #endif
 #endif

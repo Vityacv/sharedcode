@@ -176,7 +176,9 @@ void *regcall memcpyl(void *d, const void *s, size_t n) {
 //    return num;
 //}
 
-uint8_t *regcall searchBytes(uint8_t *pBuff, uintptr_t pBuffSize,
+
+
+uint8_t *regcall scanBytesImpl(uint8_t *pBuff, uintptr_t pBuffSize,
                              uint8_t *pPattBuf) {
     size_t pPattSize = *(unsigned short *)(pPattBuf);
     pPattBuf += 2;
@@ -198,10 +200,10 @@ uint8_t *regcall searchBytes(uint8_t *pBuff, uintptr_t pBuffSize,
     return 0;
 }
 
-uint8_t *regcall scanBytes(uint8_t *pBuff, uintptr_t pBuffSize,
+uint8_t *regcall scanBytesDbg(uint8_t *pBuff, uintptr_t pBuffSize,
                            uint8_t *pPattBuf) {
-    uint8_t *addr = searchBytes(pBuff, pBuffSize, pPattBuf);
-#ifdef _FORCE_DBGLOG
+    uint8_t *addr = scanBytesImpl(pBuff, pBuffSize, pPattBuf);
+
     if (!addr) {
         char strPattBuf[1024];
         int sz = *reinterpret_cast<uint16_t *>(pPattBuf);
@@ -216,7 +218,6 @@ uint8_t *regcall scanBytes(uint8_t *pBuff, uintptr_t pBuffSize,
         DBGLOG("Pattern not found %p %p %s", pBuff, (void *)pBuffSize,
                strPattBuf);
     }
-#endif
     return addr;
 }
 
