@@ -1,12 +1,12 @@
 #include "pch.h"
 #include "shared/common_macro.h"
-#include "shared/memory_utils.h"
 #include "shared/patch_handler.h"
 #include "splice/splicealloc.h"
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
+#include "shared/memory_utils.h"
 void PatchHandler::addCode(uint8_t *adr, size_t sz) {
     addPatch(adr, sz, PAGE_EXECUTE_READWRITE);
 };

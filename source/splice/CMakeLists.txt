@@ -14,7 +14,7 @@ if(MSVC)
 elseif(CMAKE_COMPILER_IS_GNUCXX)
 
     target_compile_definitions(${PROJECT_NAME} PUBLIC _UNICODE UNICODE __USE_MINGW_ANSI_STDIO=0)
-    target_compile_options(${PROJECT_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${optimization_compiler_flags} -static -static-libgcc -static-libstdc++ -fno-ident -s -fno-asynchronous-unwind-tables -fdata-sections -ffunction-sections -nostdlib -fno-exceptions -fno-sized-deallocation -march=core2 -mfpmath=sse -static -static-libgcc -static-libstdc++  -Os -fomit-frame-pointer -fno-stack-protector -mno-stack-arg-probe -fno-threadsafe-statics -fno-rtti -nostdlib -Wno-pmf-conversions -Wno-narrowing -fcf-protection=none>)
+    target_compile_options(${PROJECT_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${optimization_compiler_flags} -static -fno-ident -s -fno-asynchronous-unwind-tables -fdata-sections -ffunction-sections -nostdlib -fno-exceptions -fno-sized-deallocation -march=core2 -mfpmath=sse -static -Os -fomit-frame-pointer -fno-stack-protector -mno-stack-arg-probe -fno-threadsafe-statics -fno-rtti -nostdlib -Wno-pmf-conversions -Wno-narrowing -fcf-protection=none>)
     #target_precompile_headers(${PROJECT_NAME} PUBLIC pch.h)
 
 endif()

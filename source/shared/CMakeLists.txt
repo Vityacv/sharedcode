@@ -24,6 +24,14 @@ elseif(CMAKE_COMPILER_IS_GNUCXX)
     # -fno-exceptions
     target_compile_options(${PROJECT_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${optimization_compiler_flags} -static -static-libgcc -static-libstdc++ -fno-ident -s -fno-asynchronous-unwind-tables -fdata-sections -ffunction-sections -nostdlib -fno-sized-deallocation -march=core2 -mfpmath=sse -static -static-libgcc -static-libstdc++ -Os -fomit-frame-pointer -fno-stack-protector -mno-stack-arg-probe -fno-threadsafe-statics -fno-rtti -nostdlib -Wno-pmf-conversions -Wno-narrowing -fno-exceptions -fcf-protection=none>)
     target_precompile_headers(${PROJECT_NAME} PUBLIC pch.cpp)
-
+else()
+    set_property(SOURCE dll_dependency.S PROPERTY LANGUAGE C)
+    add_library(${PROJECT_NAME}_dll_dependency OBJECT dll_dependency.S)
+    add_library(${PROJECT_NAME} STATIC ${src} $<TARGET_OBJECTS:${PROJECT_NAME}_dll_dependency>)
+#    target_compile_features(${PROJECT_NAME} PUBLIC cxx_noexcept)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC _UNICODE UNICODE __USE_MINGW_ANSI_STDIO=0)
+    # -fno-exceptions
+    target_compile_options(${PROJECT_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${optimization_compiler_flags} -static -fno-ident -s -fno-asynchronous-unwind-tables -fdata-sections -ffunction-sections -nostdlib -fno-sized-deallocation -march=core2 -mfpmath=sse -Os -fomit-frame-pointer -fno-stack-protector -mno-stack-arg-probe -fno-threadsafe-statics -fno-rtti -nostdlib -Wno-pmf-conversions -Wno-narrowing -fno-exceptions -fcf-protection=none>)
+    target_precompile_headers(${PROJECT_NAME} PUBLIC pch.cpp)
 endif()
 

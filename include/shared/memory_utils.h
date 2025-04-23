@@ -10,6 +10,7 @@
 #define GetModuleSize(x)                                                 \
     (((PIMAGE_NT_HEADERS)((BYTE *)x + ((PIMAGE_DOS_HEADER)x)->e_lfanew)) \
          ->OptionalHeader.SizeOfImage)
+PIMAGE_SECTION_HEADER regcall GetModuleFirstExecSection(HMODULE hMod);
 void *regcall GetProcAddressByHash(void * hMod, unsigned hashName);
 uint8_t regcall isMemoryExist(void *adr);
 uint8_t regcall isModuleExist(uintptr_t mod);
@@ -25,7 +26,7 @@ inline uint32_t regcall floatToUInt32(float x) { return uint32_t(x); }
 int regcall GetRandomInt(int range);
 int regcall GetRandomIntRng(int lo, int hi);
 float regcall GetRandomFloat(float min, float max);
-uint8_t *regcall searchBytesDbg(uint8_t *pBuff, uintptr_t pBuffSize,
+uint8_t *regcall scanBytesDbg(uint8_t *pBuff, uintptr_t pBuffSize,
                              uint8_t *pPattBuf);
 uint8_t *regcall scanBytesImpl(uint8_t *pBuff, uintptr_t pBuffSize,
                            uint8_t *pPattBuf);

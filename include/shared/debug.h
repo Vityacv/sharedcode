@@ -1,7 +1,7 @@
 #ifndef _DEBUG_H
 #define _DEBUG_H
 //#include "shared/string.h"
-#define _FORCE_DBGLOG
+// #define _FORCE_DBGLOG
 #if defined(NDEBUG) && !defined(_FORCE_DBGLOG)
 #define DBGLOG(...) ((void)0);
 #else

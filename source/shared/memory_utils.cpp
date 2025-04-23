@@ -1,11 +1,23 @@
 #include "pch.h"
 #include "shared/string_utils.h"
-#include "shared/memory_utils.h"
 #include "shared/debug.h"
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+
+#include "shared/memory_utils.h"
+
+PIMAGE_SECTION_HEADER regcall GetModuleFirstExecSection(HMODULE hMod) {
+    PIMAGE_DOS_HEADER dosHeader = reinterpret_cast<PIMAGE_DOS_HEADER>(hMod);
+    PIMAGE_NT_HEADERS ntHeaders = reinterpret_cast<PIMAGE_NT_HEADERS>(reinterpret_cast<uint8_t*>(hMod) + dosHeader->e_lfanew);
+    PIMAGE_SECTION_HEADER sectionHeader = IMAGE_FIRST_SECTION(ntHeaders);
+
+    while (!(sectionHeader->Characteristics & IMAGE_SCN_MEM_EXECUTE)) {
+        ++sectionHeader;
+    }
+    return sectionHeader;
+}
 
 template <typename T>
 void *GetProcAddressByHashT(T pOptHdr, HMODULE hMod, unsigned hashName) {
