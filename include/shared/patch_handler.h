@@ -24,6 +24,7 @@ class PatchHandler {
     void regcall restorePatch(uint8_t *adr);
     void restoreProtection();
     void regcall addCode(uint8_t *adr, size_t sz = 100);
+    void regcall addMem(uint8_t *adr, size_t sz = 100);
     void regcall codeswap(uint8_t *src, const uint8_t *dst,
                           uint32_t len);
 };

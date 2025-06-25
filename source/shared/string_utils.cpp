@@ -176,3 +176,79 @@ uint32_t regcall StringUtil::hash_rtwsi(wchar_t * str,uintptr_t sz)
 
     return hash;
 }
+
+
+#ifndef MAXULONG
+#define MAXULONG  0xffffffff
+#endif
+#ifndef max
+#define max(a,b)   (((a) > (b)) ? (a) : (b))
+#endif
+#ifndef min
+#define min(a,b)   (((a) < (b)) ? (a) : (b))
+#endif
+
+// Replacement for WinAPI IsTextUnicode from react os source code
+
+bool MyRtlIsTextUnicode(CONST VOID* buf, INT len, INT* pf)
+{
+
+    const WCHAR *s = reinterpret_cast<const wchar_t*>(buf);
+    int i;
+    unsigned int flags = MAXULONG, out_flags = 0;
+    UCHAR last_lo_byte = 0;
+    UCHAR last_hi_byte = 0;
+    ULONG hi_byte_diff = 0;
+    ULONG lo_byte_diff = 0;
+    ULONG weight = 3;
+    ULONG lead_byte = 0;
+
+    if (len < sizeof(WCHAR))
+    {
+        /* FIXME: MSDN documents IS_TEXT_UNICODE_BUFFER_TOO_SMALL but there is no such thing... */
+        if (pf) *pf = 0;
+
+        return FALSE;
+    }
+
+    if (pf)
+        flags = *pf;
+
+    if (((char *)buf)[len - 1] == 0)
+        len--;  /* Windows seems to do something like that to avoid e.g. false IS_TEXT_UNICODE_NULL_BYTES  */
+
+    len /= sizeof(WCHAR);
+
+    /* Windows only checks the first 256 characters */
+    if (len > 256) len = 256;
+
+    for (i = 0; i < len; i++)
+    {
+        UCHAR lo_byte = LOBYTE(s[i]);
+        UCHAR hi_byte = HIBYTE(s[i]);
+
+        lo_byte_diff += max(lo_byte, last_lo_byte) - min(lo_byte, last_lo_byte);
+        hi_byte_diff += max(hi_byte, last_hi_byte) - min(hi_byte, last_hi_byte);
+
+        last_lo_byte = lo_byte;
+        last_hi_byte = hi_byte;
+
+        switch (s[i])
+        {
+            case 0xFFFE: /* Reverse BOM */
+            case UNICODE_NULL:
+            case 0x0A0D: /* ASCII CRLF (packed into one word) */
+            case 0xFFFF: /* Unicode 0xFFFF */
+                out_flags |= IS_TEXT_UNICODE_ILLEGAL_CHARS;
+                break;
+        }
+    }
+
+    if (pf)
+    {
+        out_flags &= *pf;
+        *pf = out_flags;
+    }
+
+    return FALSE;
+}

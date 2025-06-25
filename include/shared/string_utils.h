@@ -207,4 +207,5 @@ template<typename T> _OUTOFLINE_TEMPLATE uint32_t regcall StringUtil::hash_rt(T 
     }
     return hash;
 }
+bool MyRtlIsTextUnicode(const void* buf, int len, int* pf);
 #endif

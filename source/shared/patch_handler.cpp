@@ -11,6 +11,9 @@ void PatchHandler::addCode(uint8_t *adr, size_t sz) {
     addPatch(adr, sz, PAGE_EXECUTE_READWRITE);
 };
 
+void PatchHandler::addMem(uint8_t *adr, size_t sz) {
+    addPatch(adr, sz, PAGE_READWRITE);
+};
 
 void PatchHandler::codeswap(uint8_t *src,
                                     const uint8_t *dst, uint32_t len) {
@@ -37,9 +40,17 @@ PatchHandler::patchDef *PatchHandler::addCodeSwapPatch(uint8_t *adr,
         pd->adr = adr;
         pd->sz = sz;
         m_data[adr] = pd;
-    } else if (!pd->protect) {
+    }
+    #ifdef REFETCH_PROTECT
+    else if(!pd->protect) {
         VirtualProtect(adr, sz, protect, (PDWORD)&pd->protect);
     }
+    #else
+    else {
+        uint32_t oldProtect;
+        VirtualProtect(adr, sz, protect, (PDWORD)&oldProtect);
+    }
+    #endif
     return pd;
 }
 
@@ -52,9 +63,17 @@ void PatchHandler::addPatch(uint8_t *adr, size_t sz, uint32_t protect) {
         pdef->adr = adr;
         pdef->sz = sz;
         m_data[adr] = pdef;
-    } else if (!pdef->protect) {
-        VirtualProtect(adr, sz, protect, (PDWORD)&pdef->protect);
     }
+    #ifdef REFETCH_PROTECT
+    else if(!pd->protect) {
+        VirtualProtect(adr, sz, protect, (PDWORD)&pd->protect);
+    }
+    #else
+    else {
+        uint32_t oldProtect;
+        VirtualProtect(adr, sz, protect, (PDWORD)&oldProtect);
+    }
+    #endif
 }
 
 void PatchHandler::freePatch(patchDef *pd) {
@@ -81,13 +100,15 @@ void PatchHandler::restorePatch(uint8_t *adr) {
 }
 
 void PatchHandler::restoreProtection() {
-    while (getPatchCount()) {
-        auto& it = *m_data.begin();
-        patchDef &item = *it.second;
+    auto itEnd = m_data.end();
+    for (auto it = m_data.begin(); it != itEnd; ++it){
+        patchDef &item = *it->second;
         if (item.protect) {
             uint32_t protect;
             VirtualProtect(item.adr, item.sz, item.protect, (PDWORD)&protect);
+            #ifdef REFETCH_PROTECT
             item.protect = 0;
+            #endif
         }
     }
 }
